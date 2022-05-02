@@ -66,8 +66,6 @@ open class QSTileViewImpl @JvmOverloads constructor(
         private const val INVALID = -1
         private const val BACKGROUND_NAME = "background"
         private const val LABEL_NAME = "label"
-        private const val SECONDARY_LABEL_NAME = "secondaryLabel"
-        private const val CHEVRON_NAME = "chevron"
         const val UNAVAILABLE_ALPHA = 0.3f
         const val INACTIVE_ALPHA = 0.8f
         @VisibleForTesting
@@ -99,13 +97,6 @@ open class QSTileViewImpl @JvmOverloads constructor(
             Utils.applyAlpha(INACTIVE_ALPHA, Utils.getColorAttrDefaultColor(context, android.R.attr.textColorSecondary))
     private val colorLabelUnavailable = Utils.applyAlpha(UNAVAILABLE_ALPHA, colorLabelInactive)
 
-    private val colorSecondaryLabelActive =
-            Utils.getColorAttrDefaultColor(context, android.R.attr.textColorSecondary)
-    private val colorSecondaryLabelInactive =
-            Utils.getColorAttrDefaultColor(context, android.R.attr.textColorTertiary)
-    private val colorSecondaryLabelUnavailable =
-            Utils.applyAlpha(UNAVAILABLE_ALPHA, colorSecondaryLabelInactive)
-
     private lateinit var iconContainer: LinearLayout
     private lateinit var label: TextView
     protected lateinit var secondaryLabel: TextView
@@ -135,9 +126,7 @@ open class QSTileViewImpl @JvmOverloads constructor(
                 // These casts will throw an exception if some property is missing. We should
                 // always have all properties.
                 animation.getAnimatedValue(BACKGROUND_NAME) as Int,
-                animation.getAnimatedValue(LABEL_NAME) as Int,
-                animation.getAnimatedValue(SECONDARY_LABEL_NAME) as Int,
-                animation.getAnimatedValue(CHEVRON_NAME) as Int
+                animation.getAnimatedValue(LABEL_NAME) as Int
             )
         }
     }
@@ -253,7 +242,6 @@ open class QSTileViewImpl @JvmOverloads constructor(
         }
         secondaryLabel.alpha = if (collapsed) 0f else 1f
         setLabelColor(getLabelColorForState(QSTile.State.DEFAULT_STATE))
-        setSecondaryLabelColor(getSecondaryLabelColorForState(QSTile.State.DEFAULT_STATE))
         addView(labelContainer)
     }
 
@@ -262,7 +250,6 @@ open class QSTileViewImpl @JvmOverloads constructor(
                 .inflate(R.layout.qs_tile_side_icon, this, false) as ViewGroup
         customDrawableView = sideView.requireViewById(R.id.customDrawable)
         chevronView = sideView.requireViewById(R.id.chevron)
-        setChevronColor(getChevronColorForState(QSTile.State.DEFAULT_STATE))
         addView(sideView)
     }
 
@@ -491,11 +478,7 @@ open class QSTileViewImpl @JvmOverloads constructor(
         }
         if (!Objects.equals(secondaryLabel.text, state.secondaryLabel)) {
             secondaryLabel.text = state.secondaryLabel
-            secondaryLabel.visibility = if (TextUtils.isEmpty(state.secondaryLabel)) {
-                INVISIBLE
-            } else {
-                VISIBLE
-            }
+            secondaryLabel.visibility = INVISIBLE
         }
 
         // Colors && Shape
@@ -517,24 +500,12 @@ open class QSTileViewImpl @JvmOverloads constructor(
                         label.currentTextColor,
                         getLabelColorForState(state.state)
                     ),
-                    colorValuesHolder(
-                        SECONDARY_LABEL_NAME,
-                        secondaryLabel.currentTextColor,
-                        getSecondaryLabelColorForState(state.state)
-                    ),
-                    colorValuesHolder(
-                        CHEVRON_NAME,
-                        chevronView.imageTintList?.defaultColor ?: 0,
-                        getChevronColorForState(state.state)
-                    )
                 )
                 tileAnimator.start()
             } else {
                 setAllColors(
                     getBackgroundColorForState(state.state),
-                    getLabelColorForState(state.state),
-                    getSecondaryLabelColorForState(state.state),
-                    getChevronColorForState(state.state)
+                    getLabelColorForState(state.state)
                 )
                 setCornerRadius(getCornerRadiusForState(state.state))
             }
@@ -550,14 +521,10 @@ open class QSTileViewImpl @JvmOverloads constructor(
 
     private fun setAllColors(
         backgroundColor: Int,
-        labelColor: Int,
-        secondaryLabelColor: Int,
-        chevronColor: Int
+        labelColor: Int
     ) {
         setColor(backgroundColor)
         setLabelColor(labelColor)
-        setSecondaryLabelColor(secondaryLabelColor)
-        setChevronColor(chevronColor)
     }
 
     private fun setColor(color: Int) {
@@ -567,14 +534,6 @@ open class QSTileViewImpl @JvmOverloads constructor(
 
     private fun setLabelColor(color: Int) {
         label.setTextColor(color)
-    }
-
-    private fun setSecondaryLabelColor(color: Int) {
-        secondaryLabel.setTextColor(color)
-    }
-
-    private fun setChevronColor(color: Int) {
-        chevronView.imageTintList = ColorStateList.valueOf(color)
     }
 
     private fun loadSideViewDrawableIfNecessary(state: QSTile.State) {
@@ -658,20 +617,6 @@ open class QSTileViewImpl @JvmOverloads constructor(
             }
         }
     }
-
-    private fun getSecondaryLabelColorForState(state: Int): Int {
-        return when (state) {
-            Tile.STATE_ACTIVE -> colorSecondaryLabelActive
-            Tile.STATE_INACTIVE -> colorSecondaryLabelInactive
-            Tile.STATE_UNAVAILABLE -> colorSecondaryLabelUnavailable
-            else -> {
-                Log.e(TAG, "Invalid state $state")
-                0
-            }
-        }
-    }
-
-    private fun getChevronColorForState(state: Int): Int = getSecondaryLabelColorForState(state)
 }
 
 @VisibleForTesting
